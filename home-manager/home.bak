@@ -1,0 +1,216 @@
+{ config, pkgs, ... }:
+
+{
+  # Home Manager needs a bit of information about you and the paths it should
+  # manage.
+  home.username = "jpm";
+  home.homeDirectory = "/home/jpm";
+
+  # This value determines the Home Manager release that your configuration is
+  # compatible with. This helps avoid breakage when a new Home Manager release
+  # introduces backwards incompatible changes.
+  #
+  # You should not change this value, even if you update Home Manager. If you do
+  # want to update the value, then make sure to first check the Home Manager
+  # release notes.
+  home.stateVersion = "23.05"; # Please read the comment before changing.
+
+  # Allow non-free
+  nixpkgs.config.allowUnfree = true;
+
+  # The home.packages option allows you to install Nix packages into your
+  # environment.
+  home.packages = with pkgs; [
+    ctags
+    curl
+    dconf
+    fd
+    feh
+    firefox
+    gcc
+    grim
+    htop
+    killall
+    logseq
+    lsof
+    meslo-lgs-nf
+    mpv
+    mpvpaper
+    nerdfonts
+    nodejs
+    obsidian
+    pamixer
+    pciutils
+    pfetch
+    python3
+    ripgrep
+    slurp
+    swaybg
+    swaylock
+    swayidle
+    unzip
+    #waybar
+    (waybar.overrideAttrs (oldAttrs: {
+        mesonFlags = oldAttrs.mesonFlags ++ ["-Dexperimental=true"];
+    })
+    )
+    wev
+    wget
+
+    # # It is sometimes useful to fine-tune packages, for example, by applying
+    # # overrides. You can do that directly here, just don't forget the
+    # # parentheses. Maybe you want to install Nerd Fonts with a limited number of
+    # # fonts?
+    # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
+
+    # # You can also create simple shell scripts directly inside your
+    # # configuration. For example, this adds a command 'my-hello' to your
+    # # environment:
+    # (pkgs.writeShellScriptBin "my-hello" ''
+    #   echo "Hello, ${config.home.username}!"
+    # '')
+  ];
+
+  programs.neovim = {
+      enable = true;
+      defaultEditor = true;
+      viAlias = true;
+      vimAlias = true;
+      vimdiffAlias = true;
+      plugins = with pkgs.vimPlugins; [
+        {
+          plugin = undotree;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/undotree.lua);
+        }
+
+        {
+          plugin = lsp-zero-nvim;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/lsp.lua);
+        }
+
+        {
+          plugin = nvim-treesitter.withAllGrammars;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/treesitter.lua);
+        }
+        
+
+        {
+          plugin = telescope-nvim;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/telescope.lua);
+        }
+
+        {
+          plugin = vim-fugitive;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/fugitive.lua);
+        }
+        
+        {
+          plugin = harpoon;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/harpoon.lua);
+        }
+        
+        {
+          plugin = tagbar;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/tagbar.lua);
+        }
+        
+        {
+          plugin = nerdtree;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/nerdtree.lua);
+        }
+        
+        {
+          plugin = lualine-nvim;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/lualine.lua);
+        }
+        
+        {
+          plugin = todo-comments-nvim;
+          type = "lua";
+          config = builtins.readFile(./neovim/after/plugin/todo-comment.lua);
+        }
+        vim-which-key
+        vim-be-good
+        zk-nvim
+        catppuccin-nvim
+        playground
+        nvim-cmp
+        cmp-nvim-lsp
+        luasnip
+      ];
+      extraPackages = with pkgs; [
+        clang
+        pyright
+        black
+        marksman
+        texlab
+      ];
+  };
+
+  xdg.configFile.nvim.source = ./neovim;
+  # GTK
+  gtk = {
+    enable = true;
+    theme = {
+      name = "Catppuccin-Mocha-Compact-Pink-Dark";
+      package = pkgs.catppuccin-gtk.override {
+        accents = ["pink"];
+        size = "compact";
+        tweaks = ["rimless" "black"];
+        variant = "mocha";
+      };
+    };
+
+    iconTheme = {
+      name = "Adwaita";
+      package = pkgs.gnome.adwaita-icon-theme;
+    };
+
+    cursorTheme = {
+      name = "Catppuccin Mocha Pink";
+      package = pkgs.catppuccin-cursors.mochaPink;
+      size = 16;
+    };
+  };
+
+  # Home Manager is pretty good at managing dotfiles. The primary way to manage
+  # plain files is through 'home.file'.
+  home.file = {
+    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
+    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
+    # # symlink to the Nix store copy.
+    # ".screenrc".source = dotfiles/screenrc;
+
+    # # You can also set the file content immediately.
+    # ".gradle/gradle.properties".text = ''
+    #   org.gradle.console=verbose
+    #   org.gradle.daemon.idletimeout=3600000
+    # '';
+  };
+
+  # You can also manage environment variables but you will have to manually
+  # source
+  #
+  #  ~/.nix-profile/etc/profile.d/hm-session-vars.sh
+  #
+  # or
+  #
+  #  /etc/profiles/per-user/jpm/etc/profile.d/hm-session-vars.sh
+  #
+  # if you don't want to manage your shell through Home Manager.
+  home.sessionVariables = {
+    EDITOR = "nvim";
+  };
+
+  # Let Home Manager install and manage itself.
+  programs.home-manager.enable = true;
+}
