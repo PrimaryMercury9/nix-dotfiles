@@ -1,5 +1,13 @@
 { config, pkgs, ... }:
 
+let
+  unstable = import <nixos-unstable> { config = { allowUnfree = true; }; };
+in
+#  { home.packages = with pkgs; [
+#    unstable.logseq
+#    ];
+#  }
+
 {
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
@@ -21,6 +29,11 @@
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
+    #unstable
+    unstable.logseq
+    unstable.obsidian
+    
+    #stable
     cargo
     catppuccin-cursors.mochaDark
     catppuccin-gtk
@@ -42,7 +55,6 @@
     htop
     killall
     kitty
-    logseq
     lsof
     marksman
     meslo-lgs-nf
@@ -50,7 +62,6 @@
     mpvpaper
     nodejs
     notion-app-enhanced
-    obsidian
     pamixer
     pciutils
     pfetch
@@ -61,10 +72,13 @@
     qutebrowser
     ripgrep
     slurp
+    speedtest-cli
+    st
     sway
     swaybg
     swaylock
     swayidle
+    tldr
     tmux
     unzip
     wev
@@ -165,6 +179,7 @@
 
   programs.neovim = {
       enable = true;
+      #package = unstable.pkgs.neovim;
       defaultEditor = true;
       viAlias = true;
       vimAlias = true;
@@ -174,33 +189,12 @@
       ];
   };
 
-  #nixpkgs.config = {
-  #  packageOverrides = pkgs: rec{
-  #    dmenu = pkgs.dmenu.override {
-  #      patches = [ ~/dotfiles/arch/suckless/dmenu-5.0/dmenu ];
-  #    };
-  #  };
-  #};
-
   nixpkgs.overlays = [
       (final: prev: {
           dmenu = prev.dmenu.overrideAttrs(old: {src = ~/dotfiles/arch/suckless/dmenu-5.0 ;});
+          st = prev.st.overrideAttrs(old: {src = ~/dotfiles/arch/suckless/st-0.8.4 ;});
           })
       ];
-  
-
-  # GTK
-  #gtk = {
-  #  enable = true;
-  #  theme = {
-  #    name = "Catppuccin-Mocha-Compact-Peach-Dark";
-  #    package = pkgs.catppuccin-gtk.override {
-  #      accents = ["peach"];
-  #      size = "compact";
-  #      tweaks = ["rimless"];
-  #      variant = "mocha";
-  #    };
-  #  };
 
   gtk = {
     enable = true;
