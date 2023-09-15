@@ -2,12 +2,13 @@
 
 let
   unstable = import <nixos-unstable> { config = { allowUnfree = true; }; };
+  doom-emacs = pkgs.callPackage (builtins.fetchTarball {
+    url = https://github.com/nix-community/nix-doom-emacs/archive/master.tar.gz;
+  }) {
+    doomPrivateDir = ~/.config/doom;  # Directory containing your config.el, init.el
+                                # and packages.el files
+  };
 in
-#  { home.packages = with pkgs; [
-#    unstable.logseq
-#    ];
-#  }
-
 {
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
@@ -26,12 +27,19 @@ in
   # Allow non-free
   nixpkgs.config.allowUnfree = true;
 
+  # emacs
+  programs.emacs = {
+    enable = true;
+    package = doom-emacs;  # replace with pkgs.emacs-gtk, or a version provided by the community overlay if desired.
+    };
+
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
     #unstable
     unstable.logseq
     unstable.obsidian
+    unstable.yambar
     
     #stable
     cargo
@@ -60,24 +68,26 @@ in
     meslo-lgs-nf
     mpv
     mpvpaper
+    neofetch
+    nitch
     nodejs
     notion-app-enhanced
     pamixer
     pciutils
-    pfetch
     pkgsCross.avr.buildPackages.gcc
-    qmk
-    pyright
+    pfetch
     python3
+    pyright
+    qmk
     qutebrowser
     ripgrep
     slurp
     speedtest-cli
-    st
     sway
     swaybg
     swaylock
     swayidle
+    texlive.combined.scheme-full
     tldr
     tmux
     unzip
@@ -96,7 +106,7 @@ in
         mesonFlags = oldAttrs.mesonFlags ++ ["-Dexperimental=true"];
     })
     )
-    
+
     (writeShellScriptBin "sonarr" ''
       qutebrowser 10.0.0.200:8989
     '')
@@ -141,6 +151,11 @@ in
       qutebrowser 10.0.0.200:7878
     '')
 
+    (writeShellScriptBin "emacs" ''
+      emacsclient -nc
+    '')
+
+
     (writeShellScriptBin "WAYBAR" ''
       CONFIG="$HOME/.config/waybar/config"
       STYLE="$HOME/.config/waybar/style.css"
@@ -169,17 +184,21 @@ in
     # '')
   ];
 
-
   #fonts.fonts = with pkgs; [
   #  nerdfonts
-  #  fira-mono
+  #  source-sans-pro
+  #];
+
+  #nixpkgs.config.allowUnfreePredicate = pkg: builtingd.elem (lib.getName pkg) [
+  #  "1password-gui"
+  #  "1password"
   #];
 
   programs.git.enable = true;
 
   programs.neovim = {
       enable = true;
-      #package = unstable.pkgs.neovim;
+      package = unstable.pkgs.neovim-unwrapped;
       defaultEditor = true;
       viAlias = true;
       vimAlias = true;
@@ -192,7 +211,6 @@ in
   nixpkgs.overlays = [
       (final: prev: {
           dmenu = prev.dmenu.overrideAttrs(old: {src = ~/dotfiles/arch/suckless/dmenu-5.0 ;});
-          st = prev.st.overrideAttrs(old: {src = ~/dotfiles/arch/suckless/st-0.8.4 ;});
           })
       ];
 

@@ -1,9 +1,14 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
 { config, pkgs, ... }:
 
+let
+  doom-emacs = pkgs.callPackage (builtins.fetchTarball {
+    url = https://github.com/nix-community/nix-doom-emacs/archive/master.tar.gz;
+    #url = https://github.com/nix-community/nix-doom-emacs/archive/34d8f65.tar.gz;
+    #sha256 = "0gfb054dny6k0w55cpn2q7y3ir01m7pg48c6mkm7x9zb8xx6idqm";
+    }) {
+      doomPrivateDir = /home/jpm/.config/doom;
+      };
+in
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -15,22 +20,17 @@
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
 
+  # Hostname
   networking.hostName = "nixos"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Enable networking
   networking.networkmanager.enable = true;
 
-  # Set your time zone.
+  # Time zone.
   time.timeZone = "Australia/Sydney";
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_GB.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_AU.UTF-8";
     LC_IDENTIFICATION = "en_AU.UTF-8";
@@ -53,7 +53,7 @@
   users.users.jpm = {
     isNormalUser = true;
     description = "John";
-    extraGroups = [ "networkmanager" "wheel" "video" ];
+    extraGroups = [ "networkmanager" "wheel" "video" "keyd" ];
     packages = with pkgs; [];
   };
 
@@ -72,32 +72,87 @@
     pulse.enable = true;
   };
 
+  # Flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  
   # Screen brightness (requires video group permissions)
   programs.light.enable = true;
 
+  # fonts
   fonts.fonts = with pkgs; [
     nerdfonts
     fira-mono
+    source-sans-pro
   ];
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
+  # emacs daemon
+  services.emacs = {
+    enable = true;
+    package = doom-emacs;
+  };
+
+  # Packages installed in system profile.
   environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  cifs-utils
-  neovim  
-  kitty
-  git
-  wofi
-  python3
+    cifs-utils
+    kitty
+    git
+    wofi
+    python3
   ];
+
+  services.keyd = {
+    enable = true;
+    settings = {
+      main = {
+        capslock = "overload(nav_layer, esc)";
+        space = "overload(num_layer, space)";
+      };
+      nav_layer = {
+        h = "left";
+        j = "down";
+        k = "up";
+        l = "right";
+	y = "home";
+	u = "pagedown";
+	i = "pageup";
+	o = "end";
+      };
+      #num_layer = {
+      #  a = "1";
+      #  s = "2";
+      #  d = "3";
+      #  f = "4";
+      #  g = "5";
+      #  h = "6";
+      #  j = "7";
+      #  k = "8";
+      #  l = "9";
+      #  ";" = "0";
+      #  q = "!";
+      #  w = "@";
+      #  e = "#";
+      #  r = "$";
+      #  t = "%";
+      #  y = "^";
+      #  u = "&";
+      #  i = "*";
+      #  o = "(";
+      #  p = ")";
+      #};
+      shift = {
+        leftshift = "capslock";
+        rightshift = "capslock";
+      };
+    };
+  };
 
   # x11
-  services.xserver.enable = true;
-  services.xserver.displayManager.startx.enable = true;
+  #services.xserver.enable = true;
+  #services.xserver.displayManager.startx.enable = true;
+
   # Qtile
-  services.xserver.windowManager.qtile.enable = true;
-  services.xserver.windowManager.qtile.backend = "wayland";
+  #services.xserver.windowManager.qtile.enable = true;
+  #services.xserver.windowManager.qtile.backend = "wayland";
 
   # Hyprland
   programs.hyprland = {
@@ -105,7 +160,12 @@
     xwayland.enable = true;
   };
 
-  
+  # 1Password
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+  };
+
   # ZSH
   programs.zsh.enable = true;
   users.users.jpm.shell = pkgs.zsh;
@@ -256,6 +316,11 @@
           path = "/home/jpm/dotfiles";
           devices = [ "woodhouse" ];
         };
+        "orgmode" = {
+	  id = "zae9w-nmayb";
+          path = "/home/jpm/Documents/01-Projects/org";
+          devices = [ "woodhouse" ];
+        };
         "inbox" = {
 	  id = "zbko2-xrbjg";
           path = "/home/jpm/Documents/00-Inbox";
@@ -265,32 +330,13 @@
     };
   };
 
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
+  # Before changing this value, read the documentation
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.05"; # Did you read the comment?
-
 }
