@@ -15,23 +15,11 @@ in
   home.username = "jpm";
   home.homeDirectory = "/home/jpm";
 
-  # This value determines the Home Manager release that your configuration is
-  # compatible with. This helps avoid breakage when a new Home Manager release
-  # introduces backwards incompatible changes.
-  #
-  # You should not change this value, even if you update Home Manager. If you do
-  # want to update the value, then make sure to first check the Home Manager
-  # release notes.
+  # You should not change this value, even if you update Home Manager.
   home.stateVersion = "23.05"; # Please read the comment before changing.
 
   # Allow non-free
   nixpkgs.config.allowUnfree = true;
-
-  # emacs
-  programs.emacs = {
-    enable = true;
-    package = doom-emacs;  # replace with pkgs.emacs-gtk, or a version provided by the community overlay if desired.
-    };
 
   # The home.packages option allows you to install Nix packages into your
   # environment.
@@ -69,6 +57,7 @@ in
     mpv
     mpvpaper
     neofetch
+    rnix-lsp #nix lsp for nvim
     nitch
     nodejs
     notion-app-enhanced
@@ -155,7 +144,6 @@ in
       emacsclient -nc
     '')
 
-
     (writeShellScriptBin "WAYBAR" ''
       CONFIG="$HOME/.config/waybar/config"
       STYLE="$HOME/.config/waybar/style.css"
@@ -170,29 +158,7 @@ in
       fi
     '')
 
-    # # It is sometimes useful to fine-tune packages, for example, by applying
-    # # overrides. You can do that directly here, just don't forget the
-    # # parentheses. Maybe you want to install Nerd Fonts with a limited number of
-    # # fonts?
-    # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
-
-    # # You can also create simple shell scripts directly inside your
-    # # configuration. For example, this adds a command 'my-hello' to your
-    # # environment:
-    # (pkgs.writeShellScriptBin "my-hello" ''
-    #   echo "Hello, ${config.home.username}!"
-    # '')
   ];
-
-  #fonts.fonts = with pkgs; [
-  #  nerdfonts
-  #  source-sans-pro
-  #];
-
-  #nixpkgs.config.allowUnfreePredicate = pkg: builtingd.elem (lib.getName pkg) [
-  #  "1password-gui"
-  #  "1password"
-  #];
 
   programs.git.enable = true;
 
@@ -205,6 +171,21 @@ in
       vimdiffAlias = true;
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter.withAllGrammars
+        dracula-nvim
+        tokyonight-nvim
+        gruvbox-material
+        nightfox-nvim
+        onedark-nvim
+        material-nvim
+        tagbar
+        harpoon
+        todo-comments-nvim
+        nvim-lspconfig
+        nvim-cmp
+        cmp-nvim-lsp
+        cmp_luasnip
+        mru
+        catppuccin-nvim
       ];
   };
 
@@ -254,16 +235,6 @@ in
     # '';
   };
 
-  # You can also manage environment variables but you will have to manually
-  # source
-  #
-  #  ~/.nix-profile/etc/profile.d/hm-session-vars.sh
-  #
-  # or
-  #
-  #  /etc/profiles/per-user/jpm/etc/profile.d/hm-session-vars.sh
-  #
-  # if you don't want to manage your shell through Home Manager.
   home.sessionVariables = {
     EDITOR = "nvim";
   };
