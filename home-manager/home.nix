@@ -18,18 +18,31 @@ in
   # You should not change this value, even if you update Home Manager.
   home.stateVersion = "23.05"; # Please read the comment before changing.
 
-  # Allow non-free
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    # Allow non-free
+    allowUnfree = true;
+    # Allow EOL Electron for Obsidian
+    permittedInsecurePackages = [
+      "electron-25.9.0"
+    ];
+  };
 
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
     #unstable
-    unstable.logseq
-    unstable.obsidian
-    unstable.yambar
+    unstable.easytag
+    unstable.libreoffice
+    unstable.mcomix
+    #unstable.obsidian
+    obsidian
+    unstable.soundconverter
+    #unstable.yambar
+    unstable.zoxide
     
     #stable
+    alacritty
+    appimage-run
     cargo
     catppuccin-cursors.mochaDark
     catppuccin-gtk
@@ -43,6 +56,7 @@ in
     fd
     feh
     ffmpeg
+    file
     firefox
     gcc
     gnome.adwaita-icon-theme
@@ -60,7 +74,6 @@ in
     rnix-lsp #nix lsp for nvim
     nitch
     nodejs
-    notion-app-enhanced
     pamixer
     pciutils
     pkgsCross.avr.buildPackages.gcc
@@ -79,6 +92,7 @@ in
     texlive.combined.scheme-full
     tldr
     tmux
+    tuxguitar
     unzip
     wev
     wget
@@ -171,21 +185,21 @@ in
       vimdiffAlias = true;
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter.withAllGrammars
-        dracula-nvim
-        tokyonight-nvim
-        gruvbox-material
-        nightfox-nvim
-        onedark-nvim
-        material-nvim
-        tagbar
-        harpoon
-        todo-comments-nvim
-        nvim-lspconfig
+#        dracula-nvim
+#        tokyonight-nvim
+#        gruvbox-material
+#        nightfox-nvim
+#        onedark-nvim
+#        material-nvim
+#        tagbar
+#        harpoon
+#        todo-comments-nvim
+#        nvim-lspconfig
         nvim-cmp
         cmp-nvim-lsp
         cmp_luasnip
-        mru
-        catppuccin-nvim
+#        mru
+#        catppuccin-nvim
       ];
   };
 

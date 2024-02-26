@@ -6,14 +6,12 @@ let
     #url = https://github.com/nix-community/nix-doom-emacs/archive/34d8f65.tar.gz;
     #sha256 = "0gfb054dny6k0w55cpn2q7y3ir01m7pg48c6mkm7x9zb8xx6idqm";
     }) {
-      doomPrivateDir = /home/jpm/.config/doom;
+      doomPrivateDir = /home/jpm/dotfiles/general/doom;
+      #doomPrivateDir = /home/jpm/.config/doom;
       };
 in
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [ ./hardware-configuration.nix ];
 
   # Bootloader.
   boot.loader.grub.enable = true;
@@ -56,9 +54,45 @@ in
     extraGroups = [ "networkmanager" "wheel" "video" "keyd" ];
     packages = with pkgs; [];
   };
+  
+  # OpenGL settings 
+  nixpkgs.config.packageOverrides = pkgs: {
+    intel-vaapi-driver = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
+  };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
+  hardware.opengl = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver #iHD
+      intel-vaapi-driver #i965
+      vaapiVdpau
+      libvdpau-va-gl
+    ];
+  };
+
+  environment.sessionVariables = { LIBVA_DRIVER_NAME = "iHD"; }; # Force intel-media-driver
+
+  # Optimise storage
+  nix.optimise.automatic = true;
+  nix.optimise.dates = [ "02:00" ];
+
+  # Automatic garbage collection every week
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
+  # Package settings
+  nixpkgs.config = {
+    # Allow unfree packages
+    allowUnfree = true;
+    # Allow out of date Electron for Obsidian
+    permittedInsecurePackages = [
+      "electron-25.9.0"
+    ];
+  };
+
 
   # Bluetooth
   hardware.bluetooth.enable = true;
@@ -78,8 +112,14 @@ in
   # Screen brightness (requires video group permissions)
   programs.light.enable = true;
 
+  # Steam
+  programs.steam = {
+    enable = true;
+  };
+
   # fonts
-  fonts.fonts = with pkgs; [
+  fonts.packages = with pkgs; [
+    carlito
     nerdfonts
     fira-mono
     source-sans-pro
@@ -93,6 +133,7 @@ in
 
   # Packages installed in system profile.
   environment.systemPackages = with pkgs; [
+    alacritty
     cifs-utils
     kitty
     git
@@ -102,46 +143,23 @@ in
 
   services.keyd = {
     enable = true;
-    settings = {
-      main = {
-        capslock = "overload(nav_layer, esc)";
-        space = "overload(num_layer, space)";
-      };
-      nav_layer = {
+    keyboards.default = {
+      ids = ["*"];
+      settings = {
+        main = {
+          capslock = "overload(nav_layer, esc)";
+          #space = "overload(num_layer, space)";
+          };
+    nav_layer = {
         h = "left";
         j = "down";
         k = "up";
         l = "right";
-	y = "home";
-	u = "pagedown";
-	i = "pageup";
-	o = "end";
-      };
-      #num_layer = {
-      #  a = "1";
-      #  s = "2";
-      #  d = "3";
-      #  f = "4";
-      #  g = "5";
-      #  h = "6";
-      #  j = "7";
-      #  k = "8";
-      #  l = "9";
-      #  ";" = "0";
-      #  q = "!";
-      #  w = "@";
-      #  e = "#";
-      #  r = "$";
-      #  t = "%";
-      #  y = "^";
-      #  u = "&";
-      #  i = "*";
-      #  o = "(";
-      #  p = ")";
-      #};
-      shift = {
-        leftshift = "capslock";
-        rightshift = "capslock";
+        y = "home";
+        u = "pagedown";
+        i = "pageup";
+        o = "end";
+        };
       };
     };
   };
@@ -188,7 +206,7 @@ in
       fsType = "cifs";
       options = let
         # this line prevents hanging on network split
-        automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
+        automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,rw,uid=1000,gid=1000";
 
       in ["${automount_opts},credentials=/etc/nixos/smb-secrets"];
   };
@@ -277,54 +295,61 @@ in
       user = "jpm";
       group = "users";
       guiAddress = "127.0.0.1:8384";
-      extraOptions.gui = {
-	theme = "dark";
-      };
       overrideDevices = true;     # overrides any devices added or deleted through the WebUI
       overrideFolders = true;     # overrides any folders added or deleted through the WebUI
-      devices = {
-        "woodhouse" = { id = "GNV43TB-76P06P2-07AN3AF-YZJ6XII-URJPIAQ-FLH3DWQ-HRH7S6M-TW5TIA2"; };
-      };
-      folders = {
-        "obsidian" = {
-	  id = "ksdg2-n3fmv";
-          path = "/home/jpm/Documents/01-Projects/obsidian";
-          devices = [ "woodhouse" ];
+      settings = {
+        gui = {
+	  theme = "dark";
         };
-        "logseq" = {
-	  id = "zgavv-cktxf";
-          path = "/home/jpm/Documents/01-Projects/logseq";
-          devices = [ "woodhouse" ];
+        devices = {
+          "woodhouse" = { id = "GNV43TB-76P06P2-07AN3AF-YZJ6XII-URJPIAQ-FLH3DWQ-HRH7S6M-TW5TIA2"; };
         };
-        "cookbook" = {
-	  id = "jpnn9-jl5d9";
-          path = "/home/jpm/Documents/01-Projects/cookbook";
-          devices = [ "woodhouse" ];
-        };
-        "coding" = {
-	  id = "67t3y-nk2kv";
-          path = "/home/jpm/Documents/01-Projects/coding";
-          devices = [ "woodhouse" ];
-        };
-        "mymaps" = {
-	  id = "kdwrd-6klc5";
-          path = "/home/jpm/Documents/01-Projects/keyboards/mymaps";
-          devices = [ "woodhouse" ];
-        };
-        "dotfiles" = {
-	  id = "jnxm9-tkxip";
-          path = "/home/jpm/dotfiles";
-          devices = [ "woodhouse" ];
-        };
-        "orgmode" = {
-	  id = "zae9w-nmayb";
-          path = "/home/jpm/Documents/01-Projects/org";
-          devices = [ "woodhouse" ];
-        };
-        "inbox" = {
-	  id = "zbko2-xrbjg";
-          path = "/home/jpm/Documents/00-Inbox";
-          devices = [ "woodhouse" ];
+        folders = {
+          "obsidian" = {
+	    id = "ksdg2-n3fmv";
+            path = "/home/jpm/Documents/01-Projects/obsidian";
+            devices = [ "woodhouse" ];
+          };
+          "logseq" = {
+	    id = "zgavv-cktxf";
+            path = "/home/jpm/Documents/01-Projects/logseq";
+            devices = [ "woodhouse" ];
+          };
+          "cookbook" = {
+	    id = "jpnn9-jl5d9";
+            path = "/home/jpm/Documents/01-Projects/cookbook";
+            devices = [ "woodhouse" ];
+          };
+          "coding" = {
+  	    id = "67t3y-nk2kv";
+            path = "/home/jpm/Documents/01-Projects/coding";
+            devices = [ "woodhouse" ];
+          };
+          "mymaps" = {
+	    id = "kdwrd-6klc5";
+            path = "/home/jpm/Documents/01-Projects/keyboards/mymaps";
+            devices = [ "woodhouse" ];
+          };
+          "dotfiles" = {
+	    id = "jnxm9-tkxip";
+            path = "/home/jpm/dotfiles";
+            devices = [ "woodhouse" ];
+          };
+          "areas" = {
+	    id = "pirs2-sjv2g";
+            path = "/home/jpm/Documents/02-Areas";
+            devices = [ "woodhouse" ];
+          };
+          "orgmode" = {
+	    id = "zae9w-nmayb";
+            path = "/home/jpm/Documents/01-Projects/org";
+            devices = [ "woodhouse" ];
+          };
+          "inbox" = {
+	    id = "zbko2-xrbjg";
+            path = "/home/jpm/Documents/00-Inbox";
+            devices = [ "woodhouse" ];
+          };
         };
       };
     };
